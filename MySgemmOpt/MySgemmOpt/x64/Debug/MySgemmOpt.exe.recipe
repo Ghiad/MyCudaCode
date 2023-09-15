@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>D:\Visualstdioc\cuda_test\MySgemmOpt\x64\Debug\MySgemmOpt.exe</FullPath>
+      <FullPath>D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\x64\Debug\MySgemmOpt.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

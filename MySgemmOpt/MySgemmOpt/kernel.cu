@@ -47,7 +47,7 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     const int B_TILE_THREAD_PER_ROW = BLOCK_SIZE_N / 4;
     const int B_TILE_ROW = tid / B_TILE_THREAD_PER_ROW;
     const int B_TILE_COL = tid % B_TILE_THREAD_PER_ROW * 4;
-    cosnt int B_TILE_ROW_STRIDE = THREAD_NUM_PER_BLOCK / B_TILE_THREAD_PER_ROW;
+    const int B_TILE_ROW_STRIDE = THREAD_NUM_PER_BLOCK / B_TILE_THREAD_PER_ROW;
     // 每个线程一次取4个float,需要取多少次
     const int ldg_num_a = BLOCK_SIZE_M * BLOCK_SIZE_K / (4 * THREAD_NUM_PER_BLOCK);
     const int ldg_num_b = BLOCK_SIZE_K * BLOCK_SIZE_N / (4 * THREAD_NUM_PER_BLOCK);
@@ -72,16 +72,16 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
         //我们这只是取第一次的数据所以列方面不需要加上bx*bk
         FETCH_FLOAT4(ldg_a_reg[ldg_index]) = FETCH_FLOAT4(A[OFFSET(A_TILE_ROW+i, A_TILE_COL, K)]);
 
-        As[0][A_TILE_COL][A_TILE_ROW] = ldg[ldg_index];
-        As[0][A_TILE_COL +1][A_TILE_ROW] = ldg[ldg_index+1];
-        As[0][A_TILE_COL +2][A_TILE_ROW] = ldg[ldg_index+2];
-        As[0][A_TILE_COL +3][A_TILE_ROW] = ldg[ldg_index+3];
+        As[0][A_TILE_COL][A_TILE_ROW] = ldg_a_reg[ldg_index];
+        As[0][A_TILE_COL +1][A_TILE_ROW] = ldg_a_reg[ldg_index+1];
+        As[0][A_TILE_COL +2][A_TILE_ROW] = ldg_a_reg[ldg_index+2];
+        As[0][A_TILE_COL +3][A_TILE_ROW] = ldg_a_reg[ldg_index+3];
     }
     //预取B --> Bs,为啥b不用通过寄存器
     for (int i = 0; i < BLOCK_SIZE_M; i += B_TILE_ROW_STRIDE) {       
-        FETCH_FLOAT4(Bs[0][row][col]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW+i,B_TILE_COL,N)]);        
+        FETCH_FLOAT4(Bs[0][B_TILE_ROW][B_TILE_COL]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW+i,B_TILE_COL,N)]);
     }
-    __synthreads();
+    __syncthreads();
     //预取As-->frag_A,考虑扩展性不要写8，而是thread_size_y
     for (int i = 0; i < THREAD_SIZE_Y; i+=4) {
         //FETCH_FLOAT4(frag_A[0][i]) = FETCH_FLOAT4(As[0][0][ty * 8 + i]);
@@ -89,14 +89,14 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     }
     //预取Bs-->frag_B
     for (int i = 0; i < THREAD_SIZE_X; i+=4) {
-        FETCH_FLOAT4(frag_B[0][i]) = FETCH_FLOAT4(Bs[0][0][tx * THREAD_SIZE_X + i])
+        FETCH_FLOAT4(frag_B[0][i]) = FETCH_FLOAT4(Bs[0][0][tx * THREAD_SIZE_X + i]);
     }
 
     int write_stage_idx = 1;
     int load_stage_idx = write_stage_idx ^ 1;
     //开始大迭代
     for (int i = 0; i < K;) {
-        i += BLOCK_SIZE_K
+        i += BLOCK_SIZE_K;
         //如果还有下一次循环，那么就预取数据，从global-->ldg
         if (i < K) {
             for (int j = 0; j < BLOCK_SIZE_M; j += A_TILE_ROW_STRIDE) {
@@ -139,12 +139,12 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
                 int idx = j / B_TILE_ROW_STRIDE * 4;
                 FETCH_FLOAT4(Bs[write_stage_idx][B_TILE_ROW + j][B_TILE_COL]) = FETCH_FLOAT4(ldg_b_reg[idx]);
             }
+            //对shared memory需要同步
+            __syncthreads();
+            write_stage_idx ^= 1;
+            load_stage_idx = write_stage_idx ^ 1;
         }
-        //对shared memory需要同步
-        __syncthreads();
-
-        write_stage_idx ^= 1;
-        load_stage_idx = write_stage_idx ^ 1;
+        
         //计算最后一次小循环,BLOCK_SIZE_K一般是偶数,所以上面的循环必定会在为frag_A[1]存数据时停止，
         //同时要为下一次大循环预取数据
         for (int k = 0; k < THREAD_SIZE_Y; k += 4) {
@@ -161,11 +161,11 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
         }
 
     }
-    __syncthreads();
+    //这里为啥不需要__syncthreads();因为accum是每个线程独有的，不需要一致性
     C = &C[OFFSET(by * BLOCK_SIZE_M, bx * BLOCK_SIZE_K, K)];
     for (int m = 0; m < THREAD_SIZE_Y; m+=4) {
         for (int n = 0; n < THREAD_SIZE_X; n+=4) {
-            FETCH_FLOAT4(C[ty * THREAD_SIZE_Y + m][tx * THREAD_SIZE_X + n]) = FETCH_FLOAT4(accum[m][n]);
+            FETCH_FLOAT4(C[OFFSET(ty * THREAD_SIZE_Y + m, tx * THREAD_SIZE_X + n,N)]) = FETCH_FLOAT4(accum[m][n]);
              
         }
     }
@@ -226,7 +226,7 @@ int main() {
     checkCudaErrors(cudaEventCreate(&start));
     checkCudaErrors(cudaEventCreate(&stop));
     float msecTotal = 0;
-    int nIter = 1000;
+    int nIter = 1;
     checkCudaErrors(cudaEventRecord(start));
     for (int run = 0; run < nIter; run++) {
         Sgemm <BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
