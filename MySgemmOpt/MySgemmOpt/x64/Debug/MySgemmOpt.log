@@ -1,8 +1,16 @@
 ﻿  Compiling CUDA source file kernel.cu...
   
   D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\x64\Debug\kernel.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\kernel.cu" 
+D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\kernel.cu(62): error : the size of an array must be greater than zero
+        float ldg_a_reg[4 * ldg_num_a];
+                        ^
+            detected during instantiation of "void Sgemm<BLOCK_SIZE_M,BLOCK_SIZE_N,BLOCK_SIZE_K,THREAD_SIZE_Y,THREAD_SIZE_X>(float *, float *, float *, int, int, int) [with BLOCK_SIZE_M=128, BLOCK_SIZE_N=128, BLOCK_SIZE_K=4, THREAD_SIZE_Y=4, THREAD_SIZE_X=4]" at line 273
+  
+D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\kernel.cu(63): error : the size of an array must be greater than zero
+        float ldg_b_reg[4 * ldg_num_b];
+                        ^
+            detected during instantiation of "void Sgemm<BLOCK_SIZE_M,BLOCK_SIZE_N,BLOCK_SIZE_K,THREAD_SIZE_Y,THREAD_SIZE_X>(float *, float *, float *, int, int, int) [with BLOCK_SIZE_M=128, BLOCK_SIZE_N=128, BLOCK_SIZE_K=4, THREAD_SIZE_Y=4, THREAD_SIZE_X=4]" at line 273
+  
+  2 errors detected in the compilation of "D:/Visualstdioc/cuda_test/MycudaCode/MySgemmOpt/MySgemmOpt/kernel.cu".
   kernel.cu
-  tmpxft_00005f14_00000000-7_kernel.cudafe1.cpp
-    正在创建库 D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\x64\Debug\MySgemmOpt.lib 和对象 D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\x64\Debug\MySgemmOpt.exp
-LINK : warning LNK4098: 默认库“LIBCMT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
-  MySgemmOpt.vcxproj -> D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\x64\Debug\MySgemmOpt.exe
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\BuildCustomizations\CUDA 12.1.targets(799,9): error MSB3721: 命令“"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\x64\Debug\kernel.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\kernel.cu"”已退出，返回代码为 1。

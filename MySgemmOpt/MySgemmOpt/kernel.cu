@@ -57,6 +57,8 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     float frag_A[2][THREAD_SIZE_Y];
     float frag_B[2][THREAD_SIZE_X];
 
+    
+
     float ldg_a_reg[4 * ldg_num_a];
     float ldg_b_reg[4 * ldg_num_b];
 
@@ -66,6 +68,7 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
 
     //预取数据
     //预取A --> As,索引计算
+    #pragma unroll
     for (int i = 0; i < BLOCK_SIZE_M; i += A_TILE_ROW_STRIDE) {
         int ldg_index = i / A_TILE_ROW_STRIDE * 4;
         //我们这只是取第一次的数据所以列方面不需要加上bx*bk
@@ -78,16 +81,19 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     }
     //预取B --> Bs,为啥b不用通过寄存器
     //循环条件也写错
+    #pragma unroll
     for (int i = 0; i < BLOCK_SIZE_K; i += B_TILE_ROW_STRIDE) {       
         FETCH_FLOAT4(Bs[0][B_TILE_ROW+i][B_TILE_COL]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW+i,B_TILE_COL,N)]);
     }
     __syncthreads();
     //预取As-->frag_A,考虑扩展性不要写8，而是thread_size_y
+    #pragma unroll
     for (int i = 0; i < THREAD_SIZE_Y; i+=4) {
         //FETCH_FLOAT4(frag_A[0][i]) = FETCH_FLOAT4(As[0][0][ty * 8 + i]);
         FETCH_FLOAT4(frag_A[0][i]) = FETCH_FLOAT4(As[0][0][ty * THREAD_SIZE_Y + i]);
     }
     //预取Bs-->frag_B
+    #pragma unroll
     for (int i = 0; i < THREAD_SIZE_X; i+=4) {
         FETCH_FLOAT4(frag_B[0][i]) = FETCH_FLOAT4(Bs[0][0][tx * THREAD_SIZE_X + i]);
     }
@@ -95,30 +101,38 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     int write_stage_idx = 1;
     int load_stage_idx = write_stage_idx ^ 1;
     //开始大迭代
-    for (int i = 0; i < K;) {
-        i += BLOCK_SIZE_K;
+    int tile_idx = 0;
+    do{
+        tile_idx += BLOCK_SIZE_K;
         //如果还有下一次循环，那么就预取数据，从global-->ldg
-        if (i < K) {
+        if (tile_idx < K) {
+            #pragma unroll
             for (int j = 0; j < BLOCK_SIZE_M; j += A_TILE_ROW_STRIDE) {
                 int ldg_index = j / A_TILE_ROW_STRIDE * 4;
                 //大迭代还是在一个block上的概念而不是Block间
                 //FETCH_FLOAT4(ldg_a_reg[ldg_index]) = FETCH_FLOAT4(A[OFFSET(A_TILE_ROW + j, A_TILE_COL + bx * BLOCK_SIZE_K, K)]);
-                FETCH_FLOAT4(ldg_a_reg[ldg_index]) = FETCH_FLOAT4(A[OFFSET(A_TILE_ROW + j, A_TILE_COL + i, K)]);
+                FETCH_FLOAT4(ldg_a_reg[ldg_index]) = FETCH_FLOAT4(A[OFFSET(A_TILE_ROW + j, A_TILE_COL + tile_idx, K)]);
             }
+            #pragma unroll
             for (int j = 0; j < BLOCK_SIZE_K; j += B_TILE_ROW_STRIDE) {
                 int ldg_index = j / B_TILE_ROW_STRIDE * 4;
-                FETCH_FLOAT4(ldg_b_reg[ldg_index]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW + j + i, B_TILE_COL, N)]);
+                FETCH_FLOAT4(ldg_b_reg[ldg_index]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW + j + tile_idx, B_TILE_COL, N)]);
             }
         }
         //开始小循环
+        #pragma unroll
         for (int j = 0; j < BLOCK_SIZE_K - 1; j++) {
+            #pragma unroll
             for (int k = 0; k < THREAD_SIZE_Y; k+=4) {
                 FETCH_FLOAT4(frag_A[(j + 1) % 2][k]) = FETCH_FLOAT4(As[load_stage_idx][j + 1][ty * THREAD_SIZE_Y + k]);
             }
+            #pragma unroll
             for (int k = 0; k < THREAD_SIZE_Y; k += 4) {
                 FETCH_FLOAT4(frag_B[(j + 1) % 2][k]) = FETCH_FLOAT4(Bs[load_stage_idx][j + 1][tx * THREAD_SIZE_X + k]);
             }
+            #pragma unroll
             for (int m = 0; m < THREAD_SIZE_Y; m++) {
+                #pragma unroll
                 for (int n = 0; n < THREAD_SIZE_X; n++) {
                     //如果上次预取的数据还没取完,会怎么样
                     accum[m][n] += frag_A[j % 2][m] * frag_B[j % 2][n];
@@ -127,7 +141,8 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
         }
 
         //如果还有下一次循环，预取数据从ldg-->shared
-        if (i < K) {
+        if (tile_idx < K) {
+            #pragma unroll
             for (int j = 0; j < BLOCK_SIZE_M; j += A_TILE_ROW_STRIDE) {
                 int idx = j / A_TILE_ROW_STRIDE * 4;
                 As[write_stage_idx][A_TILE_COL][A_TILE_ROW + j] = ldg_a_reg[idx];
@@ -135,6 +150,7 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
                 As[write_stage_idx][A_TILE_COL+2][A_TILE_ROW + j] = ldg_a_reg[idx +2];
                 As[write_stage_idx][A_TILE_COL+3][A_TILE_ROW + j] = ldg_a_reg[idx +3];
             }
+            #pragma unroll
             for (int j = 0; j < BLOCK_SIZE_K; j += B_TILE_ROW_STRIDE) {
                 int idx = j / B_TILE_ROW_STRIDE * 4;
                 FETCH_FLOAT4(Bs[write_stage_idx][B_TILE_ROW + j][B_TILE_COL]) = FETCH_FLOAT4(ldg_b_reg[idx]);
@@ -147,25 +163,31 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
         
         //计算最后一次小循环,BLOCK_SIZE_K一般是偶数,所以上面的循环必定会在为frag_A[1]存数据时停止，
         //同时要为下一次大循环预取数据
+        #pragma unroll
         for (int k = 0; k < THREAD_SIZE_Y; k += 4) {
             FETCH_FLOAT4(frag_A[0][k]) = FETCH_FLOAT4(As[load_stage_idx][0][ty * THREAD_SIZE_Y + k]);
         }
+        #pragma unroll
         for (int k = 0; k < THREAD_SIZE_Y; k += 4) {
             FETCH_FLOAT4(frag_B[0][k]) = FETCH_FLOAT4(Bs[load_stage_idx][0][tx * THREAD_SIZE_X + k]);
         }
+        #pragma unroll
         for (int m = 0; m < THREAD_SIZE_Y; m++) {
+            #pragma unroll
             for (int n = 0; n < THREAD_SIZE_X; n++) {
                 //如果上次预取的数据还没取完,会怎么样
                 accum[m][n] += frag_A[1][m] * frag_B[1][n];
             }
         }
 
-    }
+    } while (tile_idx < K);
     //这里为啥不需要__syncthreads();因为accum是每个线程独有的，不需要一致性
     //C = &C[OFFSET(by * BLOCK_SIZE_M, bx * BLOCK_SIZE_K, K)];
     
     //for (int m = 0; m < THREAD_SIZE_Y; m+=4) 取数是一次取4个，但是行数还是一层一层来
+    #pragma unroll
     for (int m = 0; m < THREAD_SIZE_Y; m++) {
+        #pragma unroll
         for (int n = 0; n < THREAD_SIZE_X; n+=4) {
             /*FETCH_FLOAT4(C[OFFSET(
                 by * BLOCK_SIZE_M + ty * THREAD_SIZE_Y + m, 
@@ -228,10 +250,11 @@ int main() {
     //核函数参数配置
     const int BLOCK_SIZE_M = 128;
     const int BLOCK_SIZE_N = 128;
-    const int BLOCK_SIZE_K = 8;
-    const int THREAD_SIZE_Y = 8;
-    const int THREAD_SIZE_X = 8;
-    dim3 gridsize(m / 128, n / 128);
+    const int BLOCK_SIZE_K = 4;
+    const int THREAD_SIZE_Y = 4;
+    const int THREAD_SIZE_X = 4;
+    //dim3 gridsize(m / 128, n / 128) 不能写死啊
+    dim3 gridsize(m / BLOCK_SIZE_M, n / BLOCK_SIZE_N);
     dim3 blocksize(BLOCK_SIZE_M / THREAD_SIZE_Y, BLOCK_SIZE_N / THREAD_SIZE_X);
 
     //拷贝数据到device
@@ -270,7 +293,7 @@ int main() {
     checkCudaErrors(cudaMemcpy(dC, C, bytes_C, cudaMemcpyHostToDevice));
     checkCudaErrors(cudaEventRecord(start));
     for (int run = 0; run < nIter; run++) {
-        cublasSgemm(blas_handle, CUBLAS_OP_T, CUBLAS_OP_T,
+        cublasSgemm(blas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
             m, n, k, &alpha,
             dA, k, dB, n, &beta, dC, n
         );
