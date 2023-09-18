@@ -30,14 +30,13 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     int ty = threadIdx.y;
     int bx = blockIdx.x;
     int by = blockIdx.y;
-    
     //针对C分配线程
     const int THREAD_X_PER_BLOCK = BLOCK_SIZE_N / THREAD_SIZE_X;
     const int THREAD_Y_PER_BLOCK = BLOCK_SIZE_M / THREAD_SIZE_Y;
     const int THREAD_NUM_PER_BLOCK = THREAD_X_PER_BLOCK * THREAD_Y_PER_BLOCK;
     
     //int tid = tx + ty * blockDim.x;和下面效果应该相等
-    int tid = tx + ty * THREAD_X_PER_BLOCK;
+    const int tid = tx + ty * THREAD_X_PER_BLOCK;
 
     const int A_TILE_THREAD_PER_ROW = BLOCK_SIZE_K / 4;
     const int A_TILE_ROW = tid / A_TILE_THREAD_PER_ROW;
@@ -71,15 +70,16 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
         int ldg_index = i / A_TILE_ROW_STRIDE * 4;
         //我们这只是取第一次的数据所以列方面不需要加上bx*bk
         FETCH_FLOAT4(ldg_a_reg[ldg_index]) = FETCH_FLOAT4(A[OFFSET(A_TILE_ROW+i, A_TILE_COL, K)]);
-
-        As[0][A_TILE_COL][A_TILE_ROW] = ldg_a_reg[ldg_index];
-        As[0][A_TILE_COL +1][A_TILE_ROW] = ldg_a_reg[ldg_index+1];
-        As[0][A_TILE_COL +2][A_TILE_ROW] = ldg_a_reg[ldg_index+2];
-        As[0][A_TILE_COL +3][A_TILE_ROW] = ldg_a_reg[ldg_index+3];
+        //第一次预取从ldg->As索引计算出错
+        As[0][A_TILE_COL][A_TILE_ROW+i] = ldg_a_reg[ldg_index];
+        As[0][A_TILE_COL +1][A_TILE_ROW+i] = ldg_a_reg[ldg_index+1];
+        As[0][A_TILE_COL +2][A_TILE_ROW+i] = ldg_a_reg[ldg_index+2];
+        As[0][A_TILE_COL +3][A_TILE_ROW+i] = ldg_a_reg[ldg_index+3];
     }
     //预取B --> Bs,为啥b不用通过寄存器
-    for (int i = 0; i < BLOCK_SIZE_M; i += B_TILE_ROW_STRIDE) {       
-        FETCH_FLOAT4(Bs[0][B_TILE_ROW][B_TILE_COL]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW+i,B_TILE_COL,N)]);
+    //循环条件也写错
+    for (int i = 0; i < BLOCK_SIZE_K; i += B_TILE_ROW_STRIDE) {       
+        FETCH_FLOAT4(Bs[0][B_TILE_ROW+i][B_TILE_COL]) = FETCH_FLOAT4(B[OFFSET(B_TILE_ROW+i,B_TILE_COL,N)]);
     }
     __syncthreads();
     //预取As-->frag_A,考虑扩展性不要写8，而是thread_size_y
@@ -162,15 +162,25 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
 
     }
     //这里为啥不需要__syncthreads();因为accum是每个线程独有的，不需要一致性
-    C = &C[OFFSET(by * BLOCK_SIZE_M, bx * BLOCK_SIZE_K, K)];
-    for (int m = 0; m < THREAD_SIZE_Y; m+=4) {
+    //C = &C[OFFSET(by * BLOCK_SIZE_M, bx * BLOCK_SIZE_K, K)];
+    
+    //for (int m = 0; m < THREAD_SIZE_Y; m+=4) 取数是一次取4个，但是行数还是一层一层来
+    for (int m = 0; m < THREAD_SIZE_Y; m++) {
         for (int n = 0; n < THREAD_SIZE_X; n+=4) {
-            FETCH_FLOAT4(C[OFFSET(ty * THREAD_SIZE_Y + m, tx * THREAD_SIZE_X + n,N)]) = FETCH_FLOAT4(accum[m][n]);
-             
+            /*FETCH_FLOAT4(C[OFFSET(
+                by * BLOCK_SIZE_M + ty * THREAD_SIZE_Y + m, 
+                bx * BLOCK_SIZE_K + tx * THREAD_SIZE_X + n,
+                N)]) = FETCH_FLOAT4(accum[m][n]);
+                不是bx * block_size_k ，这里计算的是在C中的位置是Block间级别的概念
+                */
+            FETCH_FLOAT4(C[OFFSET(
+                by * BLOCK_SIZE_M + ty * THREAD_SIZE_Y + m,
+                bx * BLOCK_SIZE_N + tx * THREAD_SIZE_X + n,
+                N)]) = FETCH_FLOAT4(accum[m][n]);
         }
     }
    
-
+    
 }
 
 
@@ -185,11 +195,14 @@ int main() {
     float* A = (float*)malloc(bytes_A);
     float* B = (float*)malloc(bytes_B);
     float* C = (float*)malloc(bytes_C );
+    
     float* C1 = (float*)malloc(bytes_C);
     float* dA, * dB, * dC;
+    
     checkCudaErrors(cudaMalloc((void**)&dA, bytes_A));
     checkCudaErrors(cudaMalloc((void**)&dB, bytes_B));
     checkCudaErrors(cudaMalloc((void**)&dC, bytes_C ));
+
     
     //数据初始化
     for (int i = 0; i < m; i++) {
@@ -200,6 +213,11 @@ int main() {
     for (int i = 0; i < k; i++) {
         for (int j = 0; j < n; j++) {
             B[i * k + j] = 1.0;
+        }
+    }
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            C[i * k + j] = -1.0;
         }
     }
     //测量参数配置
@@ -234,7 +252,9 @@ int main() {
     checkCudaErrors(cudaEventRecord(stop));
     checkCudaErrors(cudaEventSynchronize(stop));
     checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
+
     checkCudaErrors(cudaMemcpy(C, dC, bytes_C, cudaMemcpyDeviceToHost));
+
     msecPerMatrixMul[0] = msecTotal / nIter;
     gigaFlops[0] = (flopsPerMatrixMul * 1.0e-9f) / (msecPerMatrixMul[0] / 1000.0f);
     printf("My gemm Performance= %.2f GFlop/s, Time= %.3f msec, Size= %.0f Ops,\n",
