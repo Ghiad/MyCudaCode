@@ -78,6 +78,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="NavieSgemm.cu" />
+    <CudaCompile Include="Sgemm3.cu" />
+    <CudaCompile Include="Sgemm9.cu" />
+    <CudaCompile Include="ShareSgemm.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Sgemm3.cuh" />
+    <ClInclude Include="NavieSgemm.cuh" />
+    <ClInclude Include="Sgemm9.cuh" />
+    <ClInclude Include="ShareSgemm.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
