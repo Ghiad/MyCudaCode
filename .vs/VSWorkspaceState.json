@@ -1,7 +1,11 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\MyCudaTest",
+    "\\MyCudaTest\\MyCudaTest",
+    "\\MySgemmOpt",
+    "\\MySgemmOpt\\MySgemmOpt"
   ],
-  "SelectedNode": "\\MyReduceOpt.sln",
+  "SelectedNode": "\\MyCudaTest\\MyCudaTest\\kernel.cu",
   "PreviewInSolutionExplorer": false
 }

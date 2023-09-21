@@ -2,7 +2,9 @@
 
 //利用shared memory解决global memory重复读取的问题，每个线程解决一个元素的计算
 template <
-	const int BLOCK	
+	const int BLOCK_SIZE_M,
+	const int BLOCK_SIZE_N,
+	const int BLOCK_SIZE_K
 >
 __global__ void shareSgemm(float* A, float* B, float* C, const int M, const int N, const int K) {
 	int tx = threadIdx.x;
@@ -11,25 +13,22 @@ __global__ void shareSgemm(float* A, float* B, float* C, const int M, const int 
 	int by = blockIdx.y;
 	int x = by * blockDim.y + ty;
 	int y = bx * blockDim.x + tx;
-	float* begin_A = A + by * BLOCK * K;
-	float* begin_B = B + bx * BLOCK;
-	float* end_A = begin_A + K;
-	float sum = 0.f;
-	for (float* A_ptr = begin_A, *B_ptr = begin_B; A_ptr < end_A; A_ptr += BLOCK, B_ptr += BLOCK * N) {
-		__shared__ float ashare[BLOCK][BLOCK];
-		__shared__ float bshare[BLOCK][BLOCK];
-
-		ashare[ty][tx] = A_ptr[ty * K + tx];
-		bshare[ty][tx] = B_ptr[ty * N+ tx];
+	//对A进行转置
+	__shared__ float As[BLOCK_SIZE_K][BLOCK_SIZE_M];
+	__shared__ float Bs[BLOCK_SIZE_K][BLOCK_SIZE_N];
+	float accum = 0.f;
+	for (int i = 0; i < K; i += BLOCK_SIZE_K) {
+		//一个线程负责读一个数据,相邻的线程读取相邻的元素,有利于合并访存
+		As[tx][ty] = A[x * K + tx + i];//按行读按列存
+		Bs[ty][tx] = B[(ty + i) * K + y];//按行读按行存
 		__syncthreads();
 
-		#pragma unroll
-		for (int kk = 0; kk < BLOCK; ++kk) {
-			sum += ashare[ty][kk] * bshare[kk][tx];
+		for (int j = 0; j < BLOCK_SIZE_M; j++) {
+			accum += As[j][ty] * Bs[j][tx];
 		}
-		__syncthreads();
+		__syncthreads;
 	}
-	C[(BLOCK * by + ty) * N + BLOCK * bx + tx] = sum;
+	C[x * K + y] = accum;
 }
 
 void invokShareSgemm() {
@@ -91,10 +90,10 @@ void invokShareSgemm() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float msecTotal = 0;
-	int nIter = 1;
+	int nIter = 100;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
-		shareSgemm<BLOCK_SIZE_M> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
+		shareSgemm<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);

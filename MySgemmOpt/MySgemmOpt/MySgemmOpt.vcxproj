@@ -55,6 +55,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_86,sm_86</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -77,16 +78,16 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="kernel.cu">
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_86,sm_86</CodeGeneration>
+    </CudaCompile>
     <CudaCompile Include="NavieSgemm.cu" />
-    <CudaCompile Include="Sgemm3.cu" />
-    <CudaCompile Include="Sgemm9.cu" />
+    <CudaCompile Include="sgemm3.cu" />
     <CudaCompile Include="ShareSgemm.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Sgemm3.cuh" />
     <ClInclude Include="NavieSgemm.cuh" />
-    <ClInclude Include="Sgemm9.cuh" />
+    <ClInclude Include="sgemm3.cuh" />
     <ClInclude Include="ShareSgemm.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

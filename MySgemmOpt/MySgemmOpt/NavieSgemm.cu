@@ -68,7 +68,7 @@ void invokNavieSgemm() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float msecTotal = 0;
-	int nIter = 1;
+	int nIter = 100;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
 		navieSgemm<< <gridsize, blocksize >> > (dA, dB, dC, m, n, k);

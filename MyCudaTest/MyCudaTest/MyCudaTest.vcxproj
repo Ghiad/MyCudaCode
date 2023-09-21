@@ -79,7 +79,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_52,sm_52</CodeGeneration>
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_86,sm_86</CodeGeneration>
     </CudaCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

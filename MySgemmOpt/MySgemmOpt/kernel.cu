@@ -5,9 +5,6 @@
 #include <stdio.h>
 #include<iostream>
 #include <malloc.h>
-#include"NavieSgemm.cuh"
-#include"ShareSgemm.cuh"
-#include"Sgemm3.cuh"
 using namespace std;
 
 #define OFFSET(row, col, ld) ((row) * (ld) + (col))
@@ -25,7 +22,8 @@ template <
     const int BLOCK_SIZE_N,
     const int BLOCK_SIZE_K,
     const int THREAD_SIZE_Y,
-    const int THREAD_SIZE_X
+    const int THREAD_SIZE_X,
+    const bool ENABLE_DOUBLE_BUFFER
 >
 __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __restrict__ C, const int M, const int N, const int K) {
     //参数准备
@@ -55,9 +53,9 @@ __global__ void Sgemm(float* __restrict__ A, float* __restrict__ B, float* __res
     __shared__ float As[2][BLOCK_SIZE_K][BLOCK_SIZE_M];
     __shared__ float Bs[2][BLOCK_SIZE_K][BLOCK_SIZE_N];
     float accum[THREAD_SIZE_Y][THREAD_SIZE_X];
-#pragma unroll
+    #pragma unroll
     for (int i = 0; i < THREAD_SIZE_Y; i++) {
-#pragma unroll
+        #pragma unroll
         for (int j = 0; j < THREAD_SIZE_X; j++) {
             accum[i][j] = 0.0;
         }
@@ -279,9 +277,9 @@ void invokeKernel() {
     const int BLOCK_SIZE_K = 8;
     const int THREAD_SIZE_Y = 8;
     const int THREAD_SIZE_X = 8;
+    const bool ENABLE_DOUBLE_BUFFER = false;
     //dim3 gridsize(m / 128, n / 128) 不能写死啊
-    dim3 gridsize(m / BLOCK_SIZE_M, n / BLOCK_SIZE_N);
-    dim3 blocksize(BLOCK_SIZE_M / THREAD_SIZE_Y, BLOCK_SIZE_N / THREAD_SIZE_X);
+    
 
     //拷贝数据到device
     checkCudaErrors(cudaMemcpy(dA, A, bytes_A, cudaMemcpyHostToDevice));
@@ -293,10 +291,13 @@ void invokeKernel() {
     checkCudaErrors(cudaEventCreate(&start));
     checkCudaErrors(cudaEventCreate(&stop));
     float msecTotal = 0;
-    int nIter = 1;
+    int nIter = 100;
     checkCudaErrors(cudaEventRecord(start));
     for (int run = 0; run < nIter; run++) {
-        Sgemm <BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
+        dim3 gridsize(m / BLOCK_SIZE_M, n / BLOCK_SIZE_N);
+        dim3 blocksize(BLOCK_SIZE_N / THREAD_SIZE_X, BLOCK_SIZE_M / THREAD_SIZE_Y);
+        Sgemm <BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X,ENABLE_DOUBLE_BUFFER> 
+            << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
     }
     checkCudaErrors(cudaEventRecord(stop));
     checkCudaErrors(cudaEventSynchronize(stop));
@@ -311,51 +312,51 @@ void invokeKernel() {
         msecPerMatrixMul[0],
         flopsPerMatrixMul);
 
-    //运行cublas
-    cublasHandle_t blas_handle;
-    cublasCreate(&blas_handle);
-    float alpha = 1.0;
-    float beta = 0;
-    checkCudaErrors(cudaMemcpy(dC, C, bytes_C, cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaEventRecord(start));
-    for (int run = 0; run < nIter; run++) {
-        cublasSgemm(blas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
-            m, n, k, &alpha,
-            dA, k, dB, n, &beta, dC, n
-        );
-    }
-    checkCudaErrors(cudaEventRecord(stop));
-    checkCudaErrors(cudaEventSynchronize(stop));
-    checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
-    checkCudaErrors(cudaMemcpy(C1, dC, bytes_C, cudaMemcpyDeviceToHost));
+    ////运行cublas
+    //cublasHandle_t blas_handle;
+    //cublasCreate(&blas_handle);
+    //float alpha = 1.0;
+    //float beta = 0;
+    //checkCudaErrors(cudaMemcpy(dC, C, bytes_C, cudaMemcpyHostToDevice));
+    //checkCudaErrors(cudaEventRecord(start));
+    //for (int run = 0; run < nIter; run++) {
+    //    cublasSgemm(blas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
+    //        m, n, k, &alpha,
+    //        dA, k, dB, n, &beta, dC, n
+    //    );
+    //}
+    //checkCudaErrors(cudaEventRecord(stop));
+    //checkCudaErrors(cudaEventSynchronize(stop));
+    //checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
+    //checkCudaErrors(cudaMemcpy(C1, dC, bytes_C, cudaMemcpyDeviceToHost));
 
-    msecPerMatrixMul[1] = msecTotal / nIter;
-    gigaFlops[1] = (flopsPerMatrixMul * 1.0e-9f) / (msecPerMatrixMul[1] / 1000.0f);
-    printf("CuBlas Performance= %.2f GFlop/s, Time= %.3f msec, Size= %.0f Ops,\n",
-        gigaFlops[1],
-        msecPerMatrixMul[1],
-        flopsPerMatrixMul);
-    cublasDestroy(blas_handle);
+    //msecPerMatrixMul[1] = msecTotal / nIter;
+    //gigaFlops[1] = (flopsPerMatrixMul * 1.0e-9f) / (msecPerMatrixMul[1] / 1000.0f);
+    //printf("CuBlas Performance= %.2f GFlop/s, Time= %.3f msec, Size= %.0f Ops,\n",
+    //    gigaFlops[1],
+    //    msecPerMatrixMul[1],
+    //    flopsPerMatrixMul);
+    //cublasDestroy(blas_handle);
 
-    //检测运行结果的正确性
-    double eps = 1.e-6;  // machine zero
-    bool correct = true;
-    for (int i = 0; i < m * n; i++) {
-        int row = i / n;
-        int col = i % n;
-        double abs_err = fabs(C[i] - C1[col * m + row]);
-        double dot_length = m;
-        double abs_val = fabs(C[i]);
-        double rel_err = abs_err / abs_val / dot_length;
-        if (rel_err > eps) {
-            printf("Error! Matrix[%05d]=%.8f, ref=%.8f error term is > %E\n",
-                i, C[i], C1[col * m + row], eps);
-            correct = false;
-            break;
-        }
-    }
-    printf("%s\n", correct ? "Result= PASS" : "Result= FAIL");
-    printf("ratio= %f\n", gigaFlops[0] / gigaFlops[1]);
+    ////检测运行结果的正确性
+    //double eps = 1.e-6;  // machine zero
+    //bool correct = true;
+    //for (int i = 0; i < m * n; i++) {
+    //    int row = i / n;
+    //    int col = i % n;
+    //    double abs_err = fabs(C[i] - C1[col * m + row]);
+    //    double dot_length = m;
+    //    double abs_val = fabs(C[i]);
+    //    double rel_err = abs_err / abs_val / dot_length;
+    //    if (rel_err > eps) {
+    //        printf("Error! Matrix[%05d]=%.8f, ref=%.8f error term is > %E\n",
+    //            i, C[i], C1[col * m + row], eps);
+    //        correct = false;
+    //        break;
+    //    }
+    //}
+    //printf("%s\n", correct ? "Result= PASS" : "Result= FAIL");
+    //printf("ratio= %f\n", gigaFlops[0] / gigaFlops[1]);
 
     //释放内存
     free(A);

@@ -118,9 +118,6 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\texture_types.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\vector_functions.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\vector_functions.hpp
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\vector_types.h
-D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\NavieSgemm.cuh
-D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm3.cuh
-D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\ShareSgemm.cuh
 D:\Windows Kits\10\Include\10.0.22000.0\ucrt\corecrt.h
 D:\Windows Kits\10\Include\10.0.22000.0\ucrt\corecrt_malloc.h
 D:\Windows Kits\10\Include\10.0.22000.0\ucrt\corecrt_math.h

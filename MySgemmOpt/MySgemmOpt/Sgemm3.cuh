@@ -7,10 +7,5 @@
 #include<iostream>
 #include <malloc.h>
 
-template <
-	const int BLOCK,
-	const int STRIDE
->
-__global__ void Sgemm3(float* a, float* b, float* c, const int m, const int n, const int k);
+__global__ void Sgemm3(float* A, float* B, float* C, const int M, const int N, const int K);
 void invokSgemm3();
-

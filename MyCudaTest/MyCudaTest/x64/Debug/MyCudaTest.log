@@ -1,13 +1,10 @@
 ﻿  Compiling CUDA source file kernel.cu...
   
-  D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\x64\Debug\kernel.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu" 
+  D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\x64\Debug\kernel.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu" 
   kernel.cu
-  tmpxft_000074e8_00000000-7_kernel.cudafe1.cpp
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(291): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(296): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(312): warning C4267: “参数”: 从“size_t”转换到“unsigned int”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(313): warning C4267: “参数”: 从“size_t”转换到“const int”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(339): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(363): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(366): warning C4244: “初始化”: 从“size_t”转换到“double”，可能丢失数据
+  tmpxft_000036c8_00000000-7_kernel.cudafe1.cpp
+D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(333): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
+D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(382): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
+D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(446): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(484): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
   MyCudaTest.vcxproj -> D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\x64\Debug\MyCudaTest.exe
