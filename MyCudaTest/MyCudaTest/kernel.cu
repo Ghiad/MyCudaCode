@@ -497,12 +497,12 @@ float testCublasPerformance(const int M, const int N, const int K, const int rep
 
 int main() {
 
-    const int M_list[15] = { 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096};
-    const int N_list[15] = { 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096};
+    const int M_list[15] = { 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384 };
+    const int N_list[15] = { 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384 };
     // const int K_list[15] = {128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384};
-    const int K_list[15] = { 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024,1024 };
+    const int K_list[15] = { 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024,1024,1024, 1024, 1024,1024 };
     const int outer_repeat = 10, inner_repeat = 1;
-    const int TESTNUM = 11;
+    const int TESTNUM = 15;
     {
         printf("\nKernal = cublas\n");
 
