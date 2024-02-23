@@ -1,122 +1,119 @@
-﻿#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+﻿#include <bits/stdc++.h>
 #include <cuda.h>
-#include <stdio.h>
-#include<iostream>
-#include <malloc.h>
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include <time.h>
 
-using namespace std;
+#define THREAD_PER_BLOCK 256
 
-const long int N = 32 * 1024 * 1024;
-const int Num_per_block = 512;
-const int Thread_per_block = 256;
+template <unsigned int blockSize>
+__device__ void warpReduce(volatile float* cache, unsigned int tid) {
+	if (blockSize >= 64)cache[tid] += cache[tid + 32];
+	if (blockSize >= 32)cache[tid] += cache[tid + 16];
+	if (blockSize >= 16)cache[tid] += cache[tid + 8];
+	if (blockSize >= 8)cache[tid] += cache[tid + 4];
+	if (blockSize >= 4)cache[tid] += cache[tid + 2];
+	if (blockSize >= 2)cache[tid] += cache[tid + 1];
+}
+
+template <unsigned int blockSize>
+__global__ void reduce5(float* d_in, float* d_out) {
+	__shared__ float sdata[THREAD_PER_BLOCK];
+
+	// each thread loads one element from global to shared mem
+	unsigned int tid = threadIdx.x;
+	unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
+	sdata[tid] = d_in[i] + d_in[i + blockDim.x];
+	__syncthreads();
+
+	// do reduction in shared mem
+	if (blockSize >= 512) {
+		if (tid < 256) {
+			sdata[tid] += sdata[tid + 256];
+		}
+		__syncthreads();
+	}
+	if (blockSize >= 256) {
+		if (tid < 128) {
+			sdata[tid] += sdata[tid + 128];
+		}
+		__syncthreads();
+	}
+	if (blockSize >= 128) {
+		if (tid < 64) {
+			sdata[tid] += sdata[tid + 64];
+		}
+		__syncthreads();
+	}
+	if (tid < 32) warpReduce<blockSize>(sdata, tid);
+
+	// write result for this block to global mem
+	if (tid == 0) d_out[blockIdx.x] = sdata[0];
+}
 
 bool check(float* out, float* res, int n) {
-    for (int i = 0; i < n; i++) {
-        if (out[i] != res[i])
-            return false;
-    }
-    return true;
-}
-template <unsigned int blockSize>
-__device__ void warpReduce(volatile float* cache, int tid) {
-    if (blockSize >= 64)cache[tid] += cache[tid + 32];
-    if (blockSize >= 32)cache[tid] += cache[tid + 16];
-    if (blockSize >= 16)cache[tid] += cache[tid + 8];
-    if (blockSize >= 8)cache[tid] += cache[tid + 4];
-    if (blockSize >= 4)cache[tid] += cache[tid + 2];
-    if (blockSize >= 2)cache[tid] += cache[tid + 1];
-}
-template <unsigned int blockSize>
-__global__ void reduce5(float* d_in, float* d_out)
-{
-    __shared__ float sdata[Thread_per_block];
-
-    int tid = threadIdx.x;
-    int id = 2 * blockSize * blockIdx.x + tid;
-    sdata[tid] = d_in[id] + d_in[id + blockSize];
-    __syncthreads();
-
-    //完全展开
-    if (blockSize >= 512) {
-        if (tid < 256) {
-            sdata[tid] += sdata[tid + 256];
-        }
-        __syncthreads();
-    }
-    if (blockSize >= 256) {
-        if (tid < 128) {
-            sdata[tid] += sdata[tid + 128];
-        }
-        __syncthreads();
-    }
-    if (blockSize >= 128) {
-        if (tid < 64) {
-            sdata[tid] += sdata[tid + 64];
-        }
-        __syncthreads();
-    }
-    if (tid < 32) warpReduce<blockSize>(sdata, tid);
-    if (tid == 0) d_out[blockIdx.x] = sdata[tid];
+	for (int i = 0; i < n; i++) {
+		if (out[i] != res[i])
+			return false;
+	}
+	return true;
 }
 
-int main()
-{
-    int block_num = N / Num_per_block;
-    long int size = N * sizeof(float);
-    float* in = (float*)malloc(size);
-    float* res = (float*)malloc(block_num * sizeof(float));
-    float* d_in;
-    float* d_out;
+int main() {
+	const int N = 32 * 1024 * 1024;
+	float* a = (float*)malloc(N * sizeof(float));
+	float* d_a;
+	cudaMalloc((void**)&d_a, N * sizeof(float));
 
-    for (long int i = 0; i < N; i++) {
-        in[i] = 1.0;
-    }
-    for (int i = 0; i < block_num; i++) {
-        float cur = 0;
-        for (int j = 0; j < Num_per_block; j++) {
-            cur += in[i * Num_per_block + j];
-        }
-        res[i] = cur;
-    }
+	int NUM_PER_BLOCK = 2 * THREAD_PER_BLOCK;
+	int block_num = N / NUM_PER_BLOCK;
+	float* out = (float*)malloc(block_num * sizeof(float));
+	float* d_out;
+	cudaMalloc((void**)&d_out, block_num * sizeof(float));
+	float* res = (float*)malloc(block_num * sizeof(float));
 
-    cudaMalloc((void**)&d_in, size);
-    cudaMalloc((void**)&d_out, block_num * sizeof(float));
-    cudaMemcpy(d_in, in, size, cudaMemcpyHostToDevice);
+	for (int i = 0; i < N; i++) {
+		a[i] = 1;
+	}
 
-    dim3 gridsize(block_num);
-    dim3 blocksize(Thread_per_block);
+	for (int i = 0; i < block_num; i++) {
+		float cur = 0;
+		for (int j = 0; j < NUM_PER_BLOCK; j++) {
+			cur += a[i * NUM_PER_BLOCK + j];
+		}
+		res[i] = cur;
+	}
 
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+	cudaMemcpy(d_a, a, N * sizeof(float), cudaMemcpyHostToDevice);
 
-    cudaEventRecord(start);
-    for (int i = 0; i < 1000; i++) {
-        reduce5<Thread_per_block> << <gridsize, blocksize >> > (d_in, d_out);
-    }
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    float   elapsedTime;
-    cudaEventElapsedTime(&elapsedTime, start, stop);
+	dim3 Grid(block_num, 1);
+	dim3 Block(THREAD_PER_BLOCK, 1);
 
-    float* out = (float*)malloc(block_num * sizeof(float));
-    cudaMemcpy(out, d_out, N / Num_per_block * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	float msecTotal = 0;
+	int nIter = 1000;
+	cudaEventRecord(start);
+	for (int i = 0; i < nIter; i++) {
+		reduce5<THREAD_PER_BLOCK> << <Grid, Block >> > (d_a, d_out);
 
-    if (check(out, res, block_num))printf("the ans is right\n");
-    else {
-        printf("the ans is wrong\n");
-        for (int i = 0; i < block_num; i++) {
-            printf("%lf ", out[i]);
-        }
-        printf("\n");
-    }
-    cout << "Time is " << elapsedTime << " ms " << endl;
-    cudaFree(d_in);
-    cudaFree(d_out);
-    free(in);
+	}
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&msecTotal, start, stop);
 
+	cudaMemcpy(out, d_out, block_num * sizeof(float), cudaMemcpyDeviceToHost);
 
-    return 0;
+	if (check(out, res, block_num))printf("the ans is right, time : %f\n", msecTotal);
+	else {
+		printf("the ans is wrong\n");
+		for (int i = 0; i < block_num; i++) {
+			printf("%lf ", out[i]);
+		}
+		printf("\n");
+	}
+
+	cudaFree(d_a);
+	cudaFree(d_out);
 }

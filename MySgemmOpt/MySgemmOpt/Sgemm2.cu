@@ -23,8 +23,8 @@ __global__ void Sgemm2(float* A, float* B, float* C, const int M, const int N, c
 		Bs[ty][tx] = B[(ty + i) * K + y];//按行读按行存
 		__syncthreads();
 
-		for (int j = 0; j < BLOCK_SIZE_M; j++) {
-			accum += As[j][ty] * Bs[j][tx];
+		for (int j = 0; j < BLOCK_SIZE_K; j++) {
+			accum += As[ty][j] * Bs[j][tx];
 		}
 		__syncthreads;
 	}
@@ -32,9 +32,9 @@ __global__ void Sgemm2(float* A, float* B, float* C, const int M, const int N, c
 }
 
 void invokSgemm2() {
-	const int m = 2048;
-	const int n = 2048;
-	const int k = 2048;
+	const int m = 1024;
+	const int n = 1024;
+	const int k = 1024;
 
 	size_t bytes_A = m * k * sizeof(float);
 	size_t bytes_B = k * n * sizeof(float);
@@ -90,7 +90,7 @@ void invokSgemm2() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float msecTotal = 0;
-	int nIter = 100;
+	int nIter = 1000;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
 		Sgemm2<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
@@ -152,7 +152,7 @@ void invokSgemm2() {
 		}
 	}
 	printf("%s\n", correct ? "Result= PASS" : "Result= FAIL");
-	printf("ratio= %f%%\n", gigaFlops[0] / gigaFlops[1]*100);
+	printf("ratio= %f%%\n", gigaFlops[0] / gigaFlops[1] * 100);
 
 	//释放内存
 	free(A);

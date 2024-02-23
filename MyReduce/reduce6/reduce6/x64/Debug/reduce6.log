@@ -1,3 +1,14 @@
-﻿    正在创建库 D:\Visualstdioc\cuda_test\reduce6\x64\Debug\reduce6.lib 和对象 D:\Visualstdioc\cuda_test\reduce6\x64\Debug\reduce6.exp
+﻿  Compiling CUDA source file kernel.cu...
+  
+  D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\reduce6>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\reduce6\x64\Debug\kernel.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\reduce6\kernel.cu" 
+D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\reduce6\kernel.cu(73): warning #177-D: variable "Num_per_thread" was declared but never referenced
+        const int Num_per_thread = Num_per_block / Thread_per_block;
+                  ^
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+  kernel.cu
+  tmpxft_000079a4_00000000-7_kernel.cudafe1.cpp
+    正在创建库 D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\x64\Debug\reduce6.lib 和对象 D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\x64\Debug\reduce6.exp
 LINK : warning LNK4098: 默认库“LIBCMT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
-  reduce6.vcxproj -> D:\Visualstdioc\cuda_test\reduce6\x64\Debug\reduce6.exe
+  reduce6.vcxproj -> D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce6\x64\Debug\reduce6.exe

@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>D:\Visualstdioc\cuda_test\reduce3\x64\Debug\reduce3.exe</FullPath>
+      <FullPath>D:\Visualstdioc\cuda_test\MycudaCode\MyReduce\reduce3\x64\Debug\reduce3.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

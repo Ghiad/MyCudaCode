@@ -1,10 +1,10 @@
-﻿  Compiling CUDA source file kernel.cu...
+﻿  Compiling CUDA source file test.cu...
   
-  D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\x64\Debug\kernel.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu" 
-  kernel.cu
-  tmpxft_000036c8_00000000-7_kernel.cudafe1.cpp
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(333): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(382): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(446): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\kernel.cu(484): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+  D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\x64\Debug\test.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\test.cu" 
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  test.cu
+  tmpxft_00008274_00000000-7_test.cudafe1.cpp
+D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\test.cu(19): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\test.cu(64): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
   MyCudaTest.vcxproj -> D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\x64\Debug\MyCudaTest.exe

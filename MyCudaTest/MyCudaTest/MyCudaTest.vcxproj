@@ -78,9 +78,17 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="GEMV.cu" />
+    <CudaCompile Include="reduce.cu" />
     <CudaCompile Include="kernel.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_86,sm_86</CodeGeneration>
     </CudaCompile>
+    <CudaCompile Include="test.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="test.cuh" />
+    <CudaCompile Include="GEMV.cuh" />
+    <ClInclude Include="reduce.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include<iostream>
 #include <malloc.h>
-#include "Sgemm5.cuh"
+#include "Sgemm3.cuh"
 using namespace std;
 
 #define OFFSET(row, col, ld) ((row) * (ld) + (col))
@@ -370,7 +370,7 @@ void invoKernel() {
 }
 
 int main() {
-	invokSgemm5();
+	invokSgemm3();
 
 	return 0;
 }

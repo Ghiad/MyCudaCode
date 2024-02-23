@@ -68,10 +68,10 @@ void invokSgemm1() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float msecTotal = 0;
-	int nIter = 100;
+	int nIter = 1000;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
-		Sgemm1<< <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
+		Sgemm1 << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -130,7 +130,7 @@ void invokSgemm1() {
 		}
 	}
 	printf("%s\n", correct ? "Result= PASS" : "Result= FAIL");
-	printf("ratio= %f %%\n", gigaFlops[0] / gigaFlops[1] *100);
+	printf("ratio= %f %%\n", gigaFlops[0] / gigaFlops[1] * 100);
 
 	//释放内存
 	free(A);

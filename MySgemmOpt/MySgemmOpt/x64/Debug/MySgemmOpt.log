@@ -1,6 +1,23 @@
-﻿  Compiling CUDA source file Sgemm5.cu...
+﻿  Compiling CUDA source file Sgemm2.cu...
   
-  D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\x64\Debug\Sgemm5.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm5.cu" 
-  Sgemm5.cu
-  tmpxft_00005fb4_00000000-7_Sgemm5.cudafe1.cpp
+  D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\x64\Debug\Sgemm2.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm2.cu" 
+D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm2.cu(1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm2.cu(29): warning #174-D: expression has no effect
+    		__syncthreads;
+    		^
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm2.cu(1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\MySgemmOpt\Sgemm2.cu(29): warning #174-D: expression has no effect
+    		__syncthreads;
+    		^
+            detected during instantiation of "void Sgemm2<BLOCK_SIZE_M,BLOCK_SIZE_N,BLOCK_SIZE_K>(float *, float *, float *, int, int, int) [with BLOCK_SIZE_M=16, BLOCK_SIZE_N=16, BLOCK_SIZE_K=16]" at line 96
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+  Sgemm2.cu
+  tmpxft_00007788_00000000-7_Sgemm2.cudafe1.cpp
   MySgemmOpt.vcxproj -> D:\Visualstdioc\cuda_test\MycudaCode\MySgemmOpt\x64\Debug\MySgemmOpt.exe
