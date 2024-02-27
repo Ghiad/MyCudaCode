@@ -78,14 +78,18 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="GEMM.cu" />
     <CudaCompile Include="GEMV.cu" />
     <CudaCompile Include="reduce.cu" />
     <CudaCompile Include="kernel.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_86,sm_86</CodeGeneration>
     </CudaCompile>
+    <CudaCompile Include="Sgemm4.cu" />
     <CudaCompile Include="test.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GEMM.cuh" />
+    <ClInclude Include="Sgemm4.cuh" />
     <ClInclude Include="test.cuh" />
     <CudaCompile Include="GEMV.cuh" />
     <ClInclude Include="reduce.cuh" />

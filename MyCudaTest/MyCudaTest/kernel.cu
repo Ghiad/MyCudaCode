@@ -8,7 +8,9 @@
 #include "device_launch_parameters.h"
 //#include "reduce.cuh"
 //#include "GEMV.cuh"
-#include "test.cuh"
+//#include "test.cuh"
+#include "GEMM.cuh"
+//#include"Sgemm4.cuh"
 using namespace std;
 #define checkCudaErrors(func)				\
 {									\
@@ -26,7 +28,7 @@ template <
 	const int THREAD_SIZE_Y,
 	const int THREAD_SIZE_X
 >
-__global__ void sgemm(float* A, float* B, float* C, int M, int N, int K) {
+__global__ void SGEMM(float* A, float* B, float* C, int M, int N, int K) {
 	int tx = threadIdx.x;
 	int ty = threadIdx.y;
 	int bx = blockIdx.x;
@@ -107,18 +109,8 @@ __global__ void sgemm(float* A, float* B, float* C, int M, int N, int K) {
 	}
 }
 
-template <
-	const int BLOCK_SIZE_M,
-	const int BLOCK_SIZE_N,
-	const int BLOCK_SIZE_K,
-	const int THREAD_SIZE_Y,
-	const int THREAD_SIZE_X
->
-__global__ void test(float* A, float* B, float* C, int M, int N, int K) {
 
-}
-
-int gemm() {
+int sgemm() {
 	const int m = 1024;
 	const int n = 1024;
 	const int k = 1024;
@@ -182,7 +174,11 @@ int gemm() {
 	int nIter = 1000;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
-		sgemm<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
+		SGEMM<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
+		/*cudaError_t err = cudaGetLastError();
+		if (err != cudaSuccess) {
+			fprintf(stderr, "CUDA Error after kernel launch: %s\n", cudaGetErrorString(err));
+		}*/
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -254,7 +250,8 @@ int gemm() {
 	return 0;
 }
 int main() {
-	test();
-	cudaDeviceSynchronize();
-
+	//invokSgemm4();
+	//cudaDeviceSynchronize();
+	gemm();
+	return 0;
 }

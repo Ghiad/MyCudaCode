@@ -81,7 +81,7 @@ void testGEMV() {
 
 	cublasSgemv(base_handle, CUBLAS_OP_T,
 		n, m, &alpa,
-		dA, m, dB, 1, &beta, dC, 1);
+		dA, n, dB, 1, &beta, dC, 1);
 
 	cudaMemcpy(C, dC, sizeC, cudaMemcpyDeviceToHost);
 	cudaDeviceSynchronize();
@@ -120,5 +120,5 @@ __global__ void inclusiveScan(float* in, float* out, int N) {
 
 }
 void test() {
-	testDiv << <1, 64 >> > ();
+	testGEMV();
 }

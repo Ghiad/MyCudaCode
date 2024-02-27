@@ -204,15 +204,11 @@ void invokSgemm5() {
 	cudaMalloc((void**)&dB, bytes_B);
 	cudaMalloc((void**)&dC, bytes_C);
 
-	for (int i = 0; i < m; i++) {
-		for (int j = 0; j < k; j++) {
-			A[i * k + j] = 1.0;
-		}
+	for (int i = 0; i < m * k; i++) {
+		A[i] = i / 13;
 	}
-	for (int i = 0; i < k; i++) {
-		for (int j = 0; j < n; j++) {
-			B[i * k + j] = 1.0;
-		}
+	for (int i = 0; i < n * k; i++) {
+		B[i] = i % 13;
 	}
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < n; j++) {

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include<iostream>
 #include <malloc.h>
-#include "Sgemm3.cuh"
+#include "Sgemm5.cuh"
 using namespace std;
 
 #define OFFSET(row, col, ld) ((row) * (ld) + (col))
@@ -252,15 +252,11 @@ void invoKernel() {
 
 
 	//数据初始化
-	for (int i = 0; i < m; i++) {
-		for (int j = 0; j < k; j++) {
-			A[i * k + j] = 1.0;
-		}
+	for (int i = 0; i < m * k; i++) {
+		A[i] = i / 13;
 	}
-	for (int i = 0; i < k; i++) {
-		for (int j = 0; j < n; j++) {
-			B[i * k + j] = 1.0;
-		}
+	for (int i = 0; i < n * k; i++) {
+		B[i] = i % 13;
 	}
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < n; j++) {
@@ -321,9 +317,13 @@ void invoKernel() {
 	checkCudaErrors(cudaMemcpy(dC, C, bytes_C, cudaMemcpyHostToDevice));
 	checkCudaErrors(cudaEventRecord(start));
 	for (int run = 0; run < nIter; run++) {
-		cublasSgemm(blas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
+		/*cublasSgemm(blas_handle, CUBLAS_OP_N, CUBLAS_OP_N,
+			n, m, k, &alpha,
+			dB, n, dA, k, &beta, dC, n
+		);*/
+		cublasSgemm(blas_handle, CUBLAS_OP_T, CUBLAS_OP_T,
 			m, n, k, &alpha,
-			dA, k, dB, n, &beta, dC, n
+			dA, m, dB, n, &beta, dC, n
 		);
 	}
 	checkCudaErrors(cudaEventRecord(stop));
@@ -370,7 +370,8 @@ void invoKernel() {
 }
 
 int main() {
-	invokSgemm3();
+	//invoKernel();
+	invokSgemm5();
 
 	return 0;
 }
