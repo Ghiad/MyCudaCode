@@ -6,10 +6,10 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include "device_launch_parameters.h"
-//#include "reduce.cuh"
+#include "reduce.cuh"
 //#include "GEMV.cuh"
 //#include "test.cuh"
-#include "GEMM.cuh"
+//#include "GEMM.cuh"
 //#include"Sgemm4.cuh"
 using namespace std;
 #define checkCudaErrors(func)				\
@@ -252,6 +252,7 @@ int sgemm() {
 int main() {
 	//invokSgemm4();
 	//cudaDeviceSynchronize();
-	gemm();
+	//GEMV();
+	reduce();
 	return 0;
 }

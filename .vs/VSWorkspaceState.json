@@ -1,9 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\MyCudaTest",
-    "\\MyCudaTest\\MyCudaTest"
+    ""
   ],
-  "SelectedNode": "\\MyCudaTest\\MyCudaTest\\kernel.cu",
+  "SelectedNode": "\\MyCudaTest.sln",
   "PreviewInSolutionExplorer": false
 }

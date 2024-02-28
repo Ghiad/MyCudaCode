@@ -228,7 +228,7 @@ void invokSgemm4() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float msecTotal = 0;
-	int nIter = 1;
+	int nIter = 1000;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
 		Sgemm4<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);

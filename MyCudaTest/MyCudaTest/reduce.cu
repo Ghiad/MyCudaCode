@@ -179,6 +179,26 @@ __global__ void reduceSum7(float* in, float* val) {
 	if (tid == 0) val[blockIdx.x] = acc;
 }
 
+template<const int num_per_block>
+__global__ void reduceSumTest(float* in, float* val) {
+	int tx = threadIdx.x;
+	
+	__shared__ float s[thread_per_block];
+	float accum = 0.0f;
+	for (int i = tx; i < num_per_block; i += blockDim.x) {
+		accum += in[i + blockIdx.x * num_per_block];
+	}
+	s[tx] = accum;
+	__syncthreads();
+
+	for (int i = thread_per_block / 2; i > 0; i >>= 1) {
+		if (tx<i) {
+			s[tx] += s[i + tx];
+		}
+		__syncthreads();
+	}
+	if (tx == 0) val[blockIdx.x] = s[0];
+}
 bool check(float* a, float* b, int size) {
 	for (int i = 0; i < size; i++) {
 		if (a[i] != b[i]) return false;
@@ -235,7 +255,7 @@ void reduce() {
 
 	cudaEventRecord(start);
 	for (int i = 0; i < iter; i++) {
-		reduceSum6<num_per_block> << < girdsize, blocksize >> > (d_a, d_b);
+		reduceSum7<num_per_block> << < girdsize, blocksize >> > (d_a, d_b);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
