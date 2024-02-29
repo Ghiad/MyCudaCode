@@ -4,6 +4,14 @@ using namespace std;
 #define OFFSET(row,col,ld) ((row)*(ld)+(col))
 #define FETCH_FLOAT4(pointer) (reinterpret_cast<float4*>(&(pointer))[0])
 
+#define CHECK_CUDA_ERROR(fun) \
+{	\
+	cudaError_t err = (fun);	\
+	if (err != cudaSuccess)		\
+		printf("%s %d CUDA:%s", __FILE__, __LINE__, cudaGetErrorString(err));	\
+}
+
+
 template <
 	const int BLOCK_SIZE_M,
 	const int BLOCK_SIZE_N,
@@ -321,7 +329,6 @@ __global__ void gemm_v2(float* A, float* B, float* C, const int M, const int N, 
 	float ldg_b[4 * b_ldg_num];
 	float accum[THREAD_SIZE_Y][THREAD_SIZE_X] = { 0.0f };
 
-	int write_idx = 0;
 
 	A = &A[by * K * BLOCK_SIZE_M];
 	B = &B[bx * BLOCK_SIZE_N];
@@ -329,15 +336,19 @@ __global__ void gemm_v2(float* A, float* B, float* C, const int M, const int N, 
 #pragma unroll
 	for (int i = 0; i < BLOCK_SIZE_M; i += a_stride) {
 		int ldg_index = i / a_stride * 4;
-		FETCH_FLOAT4(ldg_a[ldg_index]) = FETCH_FLOAT4(A[(a_start_row + i) * K + a_start_col]);
-		s_a[write_idx][a_start_col][a_start_row + i] = ldg_a[ldg_index];
-		s_a[write_idx][a_start_col + 1][a_start_row + i] = ldg_a[ldg_index + 1];
-		s_a[write_idx][a_start_col + 2][a_start_row + i] = ldg_a[ldg_index + 2];
-		s_a[write_idx][a_start_col + 3][a_start_row + i] = ldg_a[ldg_index + 3];
+		FETCH_FLOAT4(ldg_a[ldg_index]) = FETCH_FLOAT4(A[OFFSET(a_start_row + i, 
+			a_start_col, 
+			K)]);
+		s_a[0][a_start_col][a_start_row + i] = ldg_a[ldg_index];
+		s_a[0][a_start_col + 1][a_start_row + i] = ldg_a[ldg_index + 1];
+		s_a[0][a_start_col + 2][a_start_row + i] = ldg_a[ldg_index + 2];
+		s_a[0][a_start_col + 3][a_start_row + i] = ldg_a[ldg_index + 3];
 	}
 #pragma unroll
 	for (int i = 0; i < BLOCK_SIZE_K; i += b_stride) {
-		FETCH_FLOAT4(s_b[write_idx][b_start_row + i][b_start_col]) = FETCH_FLOAT4(B[(b_start_row + i) * N + b_start_col]);
+		FETCH_FLOAT4(s_b[0][b_start_row + i][b_start_col]) = FETCH_FLOAT4(B[OFFSET(b_start_row+i,
+			b_start_col,
+			N)]);
 	}
 	__syncthreads();
 
@@ -348,11 +359,11 @@ __global__ void gemm_v2(float* A, float* B, float* C, const int M, const int N, 
 	FETCH_FLOAT4(r_b[0][0]) = FETCH_FLOAT4(s_a[0][0][tx * THREAD_SIZE_X]);
 	FETCH_FLOAT4(r_b[0][4]) = FETCH_FLOAT4(s_a[0][0][tx * THREAD_SIZE_X + BLOCK_SIZE_N / 2]);*/
 	FETCH_FLOAT4(r_a[0][0]) = FETCH_FLOAT4(s_a[0][0][ty * THREAD_SIZE_Y / 2]);
-	FETCH_FLOAT4(r_a[0][4]) = FETCH_FLOAT4(s_a[0][0][ty * THREAD_SIZE_Y / 2 + BLOCK_SIZE_M / 2]);
+	FETCH_FLOAT4(r_a[0][4]) = FETCH_FLOAT4(s_a[0][0][ty * THREAD_SIZE_Y / 2 + 64]);
 	FETCH_FLOAT4(r_b[0][0]) = FETCH_FLOAT4(s_b[0][0][tx * THREAD_SIZE_X / 2]);
-	FETCH_FLOAT4(r_b[0][4]) = FETCH_FLOAT4(s_b[0][0][tx * THREAD_SIZE_X / 2 + BLOCK_SIZE_N / 2]);
+	FETCH_FLOAT4(r_b[0][4]) = FETCH_FLOAT4(s_b[0][0][tx * THREAD_SIZE_X / 2 + 64]);
 
-	write_idx ^= 1;
+	int write_idx = 1;
 #pragma unroll
 	for (int i = 0; i < K; ) {
 		i += BLOCK_SIZE_K;
@@ -361,12 +372,12 @@ __global__ void gemm_v2(float* A, float* B, float* C, const int M, const int N, 
 #pragma unroll
 			for (int j = 0; j < BLOCK_SIZE_M; j += a_stride) {
 				int ldg_index = (j / a_stride) * 4;
-				FETCH_FLOAT4(ldg_a[ldg_index]) = FETCH_FLOAT4(A[(a_start_row + j) * K + a_start_col + i]);
+				FETCH_FLOAT4(ldg_a[ldg_index]) = FETCH_FLOAT4(A[OFFSET(a_start_row+j,a_start_col+i,K)]);
 			}
 #pragma unroll
 			for (int j = 0; j < BLOCK_SIZE_K; j += b_stride) {
 				int ldg_index = (j / b_stride) * 4;
-				FETCH_FLOAT4(ldg_b[ldg_index]) = FETCH_FLOAT4(B[(b_start_row + j + i) * N + b_start_col]);
+				FETCH_FLOAT4(ldg_b[ldg_index]) = FETCH_FLOAT4(B[OFFSET(b_start_row+j+i,b_start_col,N)]);
 			}
 		}
 
@@ -375,9 +386,9 @@ __global__ void gemm_v2(float* A, float* B, float* C, const int M, const int N, 
 		for (int j = 0; j < BLOCK_SIZE_K - 1; j++) {
 
 			FETCH_FLOAT4(r_a[(j + 1) % 2][0]) = FETCH_FLOAT4(s_a[load_idx][j + 1][ty * THREAD_SIZE_Y / 2]);
-			FETCH_FLOAT4(r_a[(j + 1) % 2][4]) = FETCH_FLOAT4(s_a[load_idx][j + 1][ty * THREAD_SIZE_Y / 2 + BLOCK_SIZE_M / 2]);
+			FETCH_FLOAT4(r_a[(j + 1) % 2][4]) = FETCH_FLOAT4(s_a[load_idx][j + 1][ty * THREAD_SIZE_Y / 2 + 64]);
 			FETCH_FLOAT4(r_b[(j + 1) % 2][0]) = FETCH_FLOAT4(s_b[load_idx][j + 1][tx * THREAD_SIZE_X / 2]);
-			FETCH_FLOAT4(r_b[(j + 1) % 2][4]) = FETCH_FLOAT4(s_b[load_idx][j + 1][tx * THREAD_SIZE_X / 2 + BLOCK_SIZE_N / 2]);
+			FETCH_FLOAT4(r_b[(j + 1) % 2][4]) = FETCH_FLOAT4(s_b[load_idx][j + 1][tx * THREAD_SIZE_X / 2 + 64]);
 
 #pragma unroll
 			for (int m = 0; m < THREAD_SIZE_Y; m++) {
@@ -409,12 +420,13 @@ __global__ void gemm_v2(float* A, float* B, float* C, const int M, const int N, 
 
 		//最后一次小迭代
 		FETCH_FLOAT4(r_a[0][0]) = FETCH_FLOAT4(s_a[load_idx ^ 1][0][ty * THREAD_SIZE_Y / 2]);
-		FETCH_FLOAT4(r_a[0][4]) = FETCH_FLOAT4(s_a[load_idx ^ 1][0][ty * THREAD_SIZE_Y / 2 + BLOCK_SIZE_M / 2]);
+		FETCH_FLOAT4(r_a[0][4]) = FETCH_FLOAT4(s_a[load_idx ^ 1][0][ty * THREAD_SIZE_Y / 2 + 64]);
 		FETCH_FLOAT4(r_b[0][0]) = FETCH_FLOAT4(s_b[load_idx ^ 1][0][tx * THREAD_SIZE_X / 2]);
-		FETCH_FLOAT4(r_b[0][4]) = FETCH_FLOAT4(s_b[load_idx ^ 1][0][tx * THREAD_SIZE_X / 2 + BLOCK_SIZE_N / 2]);
+		FETCH_FLOAT4(r_b[0][4]) = FETCH_FLOAT4(s_b[load_idx ^ 1][0][tx * THREAD_SIZE_X / 2 + 64]);
 
 #pragma unroll
 		for (int m = 0; m < THREAD_SIZE_Y; m++) {
+#pragma unroll
 			for (int n = 0; n < THREAD_SIZE_X; n++) {
 				accum[m][n] += r_a[1][m] * r_b[1][n];
 			}
@@ -511,14 +523,10 @@ void gemm() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float msecTotal = 0;
-	int nIter = 1;
+	int nIter = 1000;
 	cudaEventRecord(start);
 	for (int run = 0; run < nIter; run++) {
-		gemm_v2<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
-		cudaError_t err = cudaGetLastError();
-		if (err != cudaSuccess) {
-			fprintf(stderr, "CUDA Error after kernel launch: %s\n", cudaGetErrorString(err));
-		}
+		gemm_v1<BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K, THREAD_SIZE_Y, THREAD_SIZE_X> << <gridsize, blocksize >> > (dA, dB, dC, m, n, k);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);

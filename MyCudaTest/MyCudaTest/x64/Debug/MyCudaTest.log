@@ -1,12 +1,14 @@
-﻿  Compiling CUDA source file GEMM.cu...
+﻿  Compiling CUDA source file GEMV.cu...
   
-  D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\x64\Debug\GEMM.cu.obj "D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\GEMM.cu" 
-C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-  GEMM.cu
-  tmpxft_00006780_00000000-7_GEMM.cudafe1.cpp
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\GEMM.cu(476): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
-D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\MyCudaTest\GEMM.cu(479): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
-    正在创建库 D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\x64\Debug\MyCudaTest.lib 和对象 D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\x64\Debug\MyCudaTest.exp
-LINK : warning LNK4098: 默认库“LIBCMT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
-  MyCudaTest.vcxproj -> D:\Visualstdioc\cuda_test\MycudaCode\MyCudaTest\x64\Debug\MyCudaTest.exe
+  D:\Study\cuda\code\MyCudaTest\MyCudaTest>"D:\environment\Nvidia GPU Computing Toolkit\CUDA\v12.1\bin\nvcc.exe" -gencode=arch=compute_86,code=\"sm_86,compute_86\" --use-local-env -ccbin "D:\Software\Visual stutio 2022\VC\Tools\MSVC\14.39.33519\bin\HostX64\x64" -x cu   -I"D:\environment\Nvidia GPU Computing Toolkit\CUDA\v12.1\include" -I"D:\environment\Nvidia GPU Computing Toolkit\CUDA\v12.1\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Study\cuda\code\MyCudaTest\MyCudaTest\x64\Debug\GEMV.cu.obj "D:\Study\cuda\code\MyCudaTest\MyCudaTest\GEMV.cu" 
+D:\environment\Nvidia GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+D:\environment\Nvidia GPU Computing Toolkit\CUDA\v12.1\include\cuda.h(20247): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+D:\Study\cuda\code\MyCudaTest\MyCudaTest\GEMV.cu(7): warning #177-D: variable "thread_per_block" was declared but never referenced
+    const int thread_per_block = 256;
+              ^
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+  GEMV.cu
+  tmpxft_00007134_00000000-7_GEMV.cudafe1.cpp
+  MyCudaTest.vcxproj -> D:\Study\cuda\code\MyCudaTest\x64\Debug\MyCudaTest.exe
