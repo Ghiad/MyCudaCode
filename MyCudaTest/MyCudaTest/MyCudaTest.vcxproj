@@ -80,6 +80,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="GEMM.cu" />
+    <CudaCompile Include="GemmItr0.cu" />
     <CudaCompile Include="GEMV.cu" />
     <CudaCompile Include="reduce.cu" />
     <CudaCompile Include="kernel.cu">
@@ -90,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GEMM.cuh" />
+    <ClInclude Include="GemmItr0.cuh" />
     <ClInclude Include="Sgemm4.cuh" />
     <ClInclude Include="test.cuh" />
     <CudaCompile Include="GEMV.cuh" />
