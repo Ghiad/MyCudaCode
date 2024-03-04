@@ -182,7 +182,7 @@ __global__ void reduceSum7(float* in, float* val) {
 template<const int num_per_block>
 __global__ void reduceSumTest(float* in, float* val) {
 	int tx = threadIdx.x;
-	
+
 	__shared__ float s[thread_per_block];
 	float accum = 0.0f;
 	for (int i = tx; i < num_per_block; i += blockDim.x) {
@@ -192,7 +192,7 @@ __global__ void reduceSumTest(float* in, float* val) {
 	__syncthreads();
 
 	for (int i = thread_per_block / 2; i > 0; i >>= 1) {
-		if (tx<i) {
+		if (tx < i) {
 			s[tx] += s[i + tx];
 		}
 		__syncthreads();
@@ -211,7 +211,8 @@ void reduce() {
 	//const int block_num = size / thread_per_block;
 	const int block_num = 1024;
 	const int num_per_block = size / block_num;
-	float* a = (float*)malloc(sizeof(float) * size);
+	//float* a = (float*)malloc(sizeof(float) * size);
+	float* a = new float[size];
 	float* b = (float*)malloc(sizeof(float) * block_num);
 	float* c = (float*)malloc(sizeof(float) * block_num);
 	float* d_a, * d_b;

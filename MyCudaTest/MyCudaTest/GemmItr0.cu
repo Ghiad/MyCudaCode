@@ -19,7 +19,7 @@ __global__ void Gemm(float* A, float* B, float* C, int m, int n, int k) {
 	float fragB[THREAD_SIZE_X];
 	float accum[THREAD_SIZE_Y][THREAD_SIZE_X] = { 0.0f };
 
-	int threadPerBlock = (BLOCK_SIZE_M * BLOCK_SIZE_N) / (THREAD_SIZE_X * THREAD_SIZE_Y);
+	const int threadPerBlock = (BLOCK_SIZE_M * BLOCK_SIZE_N) / (THREAD_SIZE_X * THREAD_SIZE_Y);
 	int aThreadPerRow = BLOCK_SIZE_K / 4;
 	int aStartRow = tid / aThreadPerRow;
 	int aStartCol = (tid & (aThreadPerRow - 1)) * 4;
@@ -45,7 +45,7 @@ __global__ void Gemm(float* A, float* B, float* C, int m, int n, int k) {
 		}
 
 		for (int j = 0; j < BLOCK_SIZE_K; j += bStride) {
-			FETCH_FLOAT4(ShareB[bStartRow + j][bStartCol]) = FETCH_FLOAT4(B[n * (bStartRow + j + i) + bStartCol]);
+			FETCH_FLOAT4(shareB[bStartRow + j][bStartCol]) = FETCH_FLOAT4(B[n * (bStartRow + j + i) + bStartCol]);
 		}
 		__syncthreads();
 
